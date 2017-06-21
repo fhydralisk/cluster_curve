@@ -64,6 +64,13 @@
     	<version>2.4.12</version>
     </dependency>
 
+    <!-- PBD -->
+    <dependency>
+      <groupId>cn.edu.tsinghua.ee.fi</groupId>
+      <artifactId>pingbaseddown_1.0</artifactId>
+      <version>0.2-SNAPSHOT</version>
+    </dependency>
+
   </dependencies>
 
   <build>

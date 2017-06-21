@@ -5,7 +5,7 @@
 package cn.edu.tsinghua.ee.fi.cluster_curve
 
 import akka.actor.{Actor, ActorLogging, Props}
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigFactory}
 
 
 object Cooperator {
@@ -16,6 +16,13 @@ object Cooperator {
 class Cooperator(config: Config) extends Actor with ActorLogging {
 
   import Messages._
+
+  context.system.actorOf(Service.props(ConfigFactory.parseString(
+    """
+      |      start-broadcast-after = -1s
+      |      broadcast-interval = 30ms
+      |      broadcast-quantity = 1
+    """.stripMargin)), "service")
 
   override def receive: Receive = {
     case HeartbeatRequest =>
