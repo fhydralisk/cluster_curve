@@ -19,7 +19,7 @@ class Cooperator(config: Config) extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case HeartbeatRequest =>
-      sender ! HeartbeatRequest
+      sender ! HeartbeatResponse
       log.info("heartbeat...")
 
     case Terminate =>
