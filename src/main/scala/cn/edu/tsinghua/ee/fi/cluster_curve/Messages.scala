@@ -5,8 +5,8 @@ package cn.edu.tsinghua.ee.fi.cluster_curve
   */
 object Messages {
 
-  object HeartbeatRequest
-  object HeartbeatResponse
+  case object HeartbeatRequest
+  case object HeartbeatResponse
 
-  object Terminate
+  case object Terminate
 }
