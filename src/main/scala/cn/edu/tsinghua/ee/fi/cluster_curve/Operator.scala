@@ -197,7 +197,8 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
                 rtt = increaseRttInMap(rtt, remote, -1)
               case Failure(e) =>
                 log.warning(s"unhandled exception $e in worker")
-              case _ =>
+              case msg @ _=>
+                log.warning(s"unhandled message $msg")
             }
         }
       } else {
