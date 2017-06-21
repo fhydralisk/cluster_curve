@@ -37,13 +37,13 @@ class Operator(config: Config) extends Actor with ActorLogging {
 
   private val testList =
     for (
-      testName <- config.getStringList("test");
+      testName <- config.getStringList("test").toList;
       shell <- (
-        config.getStringList(s"$testName.custom.shell-commands.shells")
+        config.getStringList(s"$testName.custom.shell-commands.shells").toList
           zip
-          config.getStringList(s"$testName.custom.shell-commands.names")
+          config.getStringList(s"$testName.custom.shell-commands.names").toList
         );
-      hbi <- config.getStringList(s"$testName.heartbeat-interval")
+      hbi <- config.getStringList(s"$testName.heartbeat-interval").toList
     ) yield ConfigFactory.parseString(
       s"""
         |test-name = $testName
