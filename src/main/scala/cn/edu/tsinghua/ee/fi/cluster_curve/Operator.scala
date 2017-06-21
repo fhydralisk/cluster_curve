@@ -98,16 +98,15 @@ class Operator(config: Config) extends Actor with ActorLogging {
     // schedule next miner
     context become preparing
     if (itTest.hasNext) {
-      val nextTask = itTest.next()
-      log.info(s"scheduling next mining task... $nextTask")
-      self ! NextMine(nextTask)
+      log.info(s"scheduling next mining task...")
+      self ! NextMine(itTest.next())
     } else
       self ! MineComplete
 
   }
 
   def createWorkingActor(mineConfig: Config): Unit = {
-    context.actorOf(Worker.props(config, testInterval.toMillis millis, addr2selection)(heartbeatTimeout.toMillis millis))
+    context.actorOf(Worker.props(mineConfig, testInterval.toMillis millis, addr2selection)(heartbeatTimeout.toMillis millis))
   }
 
   def saveResult(testName: String, name: String, result: Map[Address, Vector[Long]]): Unit = {
