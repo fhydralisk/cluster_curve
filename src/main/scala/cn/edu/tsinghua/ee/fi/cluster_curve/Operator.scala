@@ -43,7 +43,7 @@ class Operator(config: Config) extends Actor with ActorLogging {
           zip
           config.getStringList(s"$testName.custom.shell-commands.names")
         );
-      hbi <- config.getDurationList(s"$testName.heartbeat-interval")
+      hbi <- config.getStringList(s"$testName.heartbeat-interval")
     ) yield ConfigFactory.parseString(
       s"""
         |test-name = $testName
