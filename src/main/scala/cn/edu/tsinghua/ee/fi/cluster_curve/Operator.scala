@@ -61,7 +61,7 @@ class Operator(config: Config) extends Actor with ActorLogging {
   // statistics
   private var statistics: Vector[(String, String, Map[Address, Vector[Long]])] = Vector()
 
-  context become preparing
+  scheduleNext()
 
   override def receive: Receive = {
     case _ =>
@@ -97,9 +97,10 @@ class Operator(config: Config) extends Actor with ActorLogging {
   def scheduleNext(): Unit = {
     // schedule next miner
     context become preparing
-    if (itTest.hasNext)
+    if (itTest.hasNext) {
+      log.info("scheduling next mining task...")
       self ! NextMine(itTest.next())
-    else
+    } else
       self ! MineComplete
 
   }
