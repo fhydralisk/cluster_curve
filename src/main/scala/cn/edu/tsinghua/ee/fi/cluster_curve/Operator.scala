@@ -211,8 +211,8 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
   }
 
   override def preStart(): Unit = {
-    log.info(s"Starting test ${config.getString("testName")}-${config.getString("name")}, " +
-      s"heartbeat interval: ${config.getDuration("heartbeat-interval").toMillis} ms")
+    log.info(s"Starting test $testName-$name, " +
+      s"heartbeat interval: ${hbi.toMillis} ms")
 
     log.info(s"Executing shell command $shell")
     if (shell.! != 0)
