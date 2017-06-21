@@ -186,7 +186,7 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
       if ((remotes diff hb_receive.keySet nonEmpty) || (hb_receive exists { _._2 < mineAmount})) {
         val timeStart = System.currentTimeMillis()
         remotes foreach { remote =>
-          if (hb_receive(remote) < mineAmount)
+          if (!(hb_receive contains remote) || (hb_receive(remote) < mineAmount))
             addr2selection(remote) ? HeartbeatRequest onComplete {
               case Success(HeartbeatResponse) =>
                 hb_receive = increaseInMap(hb_receive, remote)
