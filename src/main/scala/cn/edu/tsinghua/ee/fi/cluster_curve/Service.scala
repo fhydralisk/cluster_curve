@@ -28,14 +28,16 @@ class Service(config: Config) extends Actor with ActorLogging {
   private val broadcastInterval = config.getDuration("broadcast-interval")
   private val broadcastQuantity = config.getInt("broadcast-quantity")
 
-  if (!broadcastAfter.isNegative)
-    context.system.scheduler.schedule(Duration.fromNanos(broadcastAfter.toNanos), Duration.fromNanos(broadcastInterval.toNanos)) {
-      cluster.state.members.filterNot (_.address == cluster.selfAddress) foreach { m =>
-        1 to broadcastQuantity foreach { _ =>
-          context.actorSelection(s"${m.address.protocol}://${m.address.hostPort}/user/service") ! Service.Messages.ServiceRequest()
+  private val broadcastTask = if (!broadcastAfter.isNegative)
+    Some(
+      context.system.scheduler.schedule(Duration.fromNanos(broadcastAfter.toNanos), Duration.fromNanos(broadcastInterval.toNanos)) {
+        cluster.state.members.filterNot (_.address == cluster.selfAddress) foreach { m =>
+          1 to broadcastQuantity foreach { _ =>
+            context.actorSelection(s"${m.address.protocol}://${m.address.hostPort}/user/service") ! Service.Messages.ServiceRequest()
+          }
         }
       }
-    }
+    ) else None
 
   override def receive = {
     case Service.Messages.ServiceRequest() =>
@@ -46,5 +48,6 @@ class Service(config: Config) extends Actor with ActorLogging {
 
   override def postStop(): Unit = {
     log.debug("Service actor is exiting")
+    broadcastTask foreach { _.cancel() }
   }
 }
