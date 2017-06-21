@@ -246,7 +246,8 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
     }
 
   def indicateProcess(address: Address): Unit = {
-    if ((hb_receive(address) * 100) / mineAmount != ((hb_receive(address) - 1) * 100) / mineAmount)
-      log.info(s"Mining process:$address: ${hb_receive(address) * 100 / mineAmount}")
+    //if ((hb_receive(address) * 100) / mineAmount != ((hb_receive(address) - 1) * 100) / mineAmount)
+      log.info(s"Mining process:$address: ${(hb_receive(address) * 100) / mineAmount}")
+    log.info(s"${hb_receive(address)}")
   }
 }
