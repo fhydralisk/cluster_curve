@@ -98,8 +98,9 @@ class Operator(config: Config) extends Actor with ActorLogging {
     // schedule next miner
     context become preparing
     if (itTest.hasNext) {
-      log.info("scheduling next mining task...")
-      self ! NextMine(itTest.next())
+      val nextTask = itTest.next()
+      log.info(s"scheduling next mining task... $nextTask")
+      self ! NextMine(nextTask)
     } else
       self ! MineComplete
 
