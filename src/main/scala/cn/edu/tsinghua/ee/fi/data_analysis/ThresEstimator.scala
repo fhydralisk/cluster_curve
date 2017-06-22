@@ -5,7 +5,7 @@ import cn.edu.tsinghua.ee.fi.pingbaseddown.Evaluation
 /**
   * Created by hydra on 2017/6/21.
   */
-class ThresEstimator(rtts: Vector[Int], window: Int, evaluation: Evaluation[Int]) {
+class ThresEstimator[T](rtts: Vector[T], window: Int, evaluation: Evaluation[T]) {
 
   val thresholds: Vector[Double] =
     rtts sliding window map { vrtt => evaluation.evaluate(vrtt.toList, 0) } toVector
@@ -49,7 +49,7 @@ private class ThresEstimateHelper(thresholds: Vector[Double]) {
     if (interpolation) {
       if (posI <= 0)
         min * pos * sortedThres.size
-      else if (pos >= sortedThres.size - 1) {
+      else if (posI >= sortedThres.size - 1) {
         // TODO: How to deal with this interpolation
         max
       }

@@ -4,7 +4,7 @@ package cn.edu.tsinghua.ee.fi.data_analysis
   * Created by hydra on 2017/6/21.
   */
 
-class ProperThresCalculator(normalThresEstimator: ThresEstimator, lossThresEstimator: ThresEstimator) {
+class ProperThresCalculator[T](normalThresEstimator: ThresEstimator[T], lossThresEstimator: ThresEstimator[T]) {
 
   private val middlePoint = (normalThresEstimator.max + lossThresEstimator.min) / 2.0
   /**
