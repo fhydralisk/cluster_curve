@@ -211,7 +211,10 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
         self ! PoisonPill
       }
     }
+  }
 
+  context.system.scheduler.scheduleOnce(testInterval) {
+    context.system.actorOf(Service.props(serviceConfig), name = "service")
   }
 
   override def preStart(): Unit = {
@@ -222,7 +225,6 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
     if (shell.! != 0)
       log.warning("Shell command returns non-zero which implies a failure")
 
-    context.system.actorOf(Service.props(serviceConfig), name = "service")
   }
 
   override def postStop(): Unit = {
@@ -232,6 +234,7 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
     remotes foreach { remote =>
       addr2selection(remote) ! Terminate
     }
+    context.actorSelection("/user/service") ! PoisonPill
   }
 
   override def receive: Receive = {

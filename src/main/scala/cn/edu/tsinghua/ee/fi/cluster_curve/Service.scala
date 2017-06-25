@@ -23,6 +23,7 @@ class Service(config: Config) extends Actor with ActorLogging {
   val cluster = Cluster(context.system)
 
   import context.dispatcher
+  assert(Thread.currentThread().getPriority != Thread.MAX_PRIORITY)
 
   private val broadcastAfter = config.getDuration("start-broadcast-after")
   private val broadcastInterval = config.getDuration("broadcast-interval")
