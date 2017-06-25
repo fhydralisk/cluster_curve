@@ -106,7 +106,7 @@ class Operator(config: Config) extends Actor with ActorLogging {
   }
 
   def createWorkingActor(mineConfig: Config): Unit = {
-    context.actorOf(Worker.props(mineConfig, testInterval.toMillis millis, addr2selection)(heartbeatTimeout.toMillis millis))
+    context.actorOf(Worker.props(mineConfig, testInterval.toMillis millis, addr2selection)(heartbeatTimeout.toMillis millis).withDispatcher("heartbeat-dispatcher"))
   }
 
   def saveResult(testName: String, name: String, result: Map[Address, Vector[Long]]): Unit = {
@@ -166,6 +166,8 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
 
   private val cluster = Cluster(context.system)
 
+  Thread.currentThread().setPriority(Thread.MAX_PRIORITY)
+
   // heartbeat statistics
 
   @volatile
@@ -219,7 +221,7 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
     if (shell.! != 0)
       log.warning("Shell command returns non-zero which implies a failure")
 
-    context.actorOf(Service.props(serviceConfig))
+    context.system.actorOf(Service.props(serviceConfig), name = "service")
   }
 
   override def postStop(): Unit = {

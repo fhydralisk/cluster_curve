@@ -16,6 +16,7 @@ object Cooperator {
 class Cooperator(config: Config) extends Actor with ActorLogging {
 
   import Messages._
+  Thread.currentThread().setPriority(Thread.MAX_PRIORITY)
 
   context.system.actorOf(Service.props(ConfigFactory.parseString(
     """

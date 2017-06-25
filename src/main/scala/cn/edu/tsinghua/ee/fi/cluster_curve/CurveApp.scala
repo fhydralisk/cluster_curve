@@ -25,7 +25,7 @@ object CurveApp {
 
       case "cooperator" =>
         val cooperatorConfig = config.getConfig("cooperator")
-        system.actorOf(Cooperator.props(cooperatorConfig), name="cooperator")
+        system.actorOf(Cooperator.props(cooperatorConfig).withDispatcher("heartbeat-dispatcher"), name="cooperator")
     }
 
   }
