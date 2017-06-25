@@ -10,7 +10,7 @@ import akka.actor.{Actor, ActorLogging, ActorPath, ActorSelection, Address, Pois
 import akka.cluster.Cluster
 import akka.util.Timeout
 import akka.pattern.{AskTimeoutException, ask}
-import cn.edu.tsinghua.ee.fi.cluster_curve.Messages.{HeartbeatRequest, HeartbeatResponse}
+import cn.edu.tsinghua.ee.fi.cluster_curve.Messages.{HeartbeatRequest, HeartbeatResponse, Terminate}
 import cn.edu.tsinghua.ee.fi.cluster_curve.Operator.{MineComplete, MineResult, NextMine}
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -163,6 +163,7 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
   private val shell = config.getString("shell")
   private val name = config.getString("name")
   private val testName = config.getString("test-name")
+  private val cleanupShell = config.getString("cleanup-shell")
 
   private val cluster = Cluster(context.system)
 
@@ -226,6 +227,11 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
 
   override def postStop(): Unit = {
     task.cancel()
+    cleanupShell.!
+    val remotes = cluster.state.members.filter { _.roles contains "cooperator" } map { _.address }
+    remotes foreach { remote =>
+      addr2selection(remote) ! Terminate
+    }
   }
 
   override def receive: Receive = {
