@@ -5,6 +5,7 @@
 package cn.edu.tsinghua.ee.fi.cluster_curve
 
 import akka.actor.{Actor, ActorLogging, Props}
+import akka.cluster.Cluster
 import com.typesafe.config.{Config, ConfigFactory}
 
 
@@ -18,12 +19,16 @@ class Cooperator(config: Config) extends Actor with ActorLogging {
   import Messages._
   Thread.currentThread().setPriority(Thread.MAX_PRIORITY)
 
-  context.system.actorOf(Service.props(ConfigFactory.parseString(
-    """
-      |      start-broadcast-after = -1s
-      |      broadcast-interval = 30ms
-      |      broadcast-quantity = 1
-    """.stripMargin)), "service")
+  val cluster = Cluster(context.system)
+
+  if (!(cluster.getSelfRoles contains "operator")) {
+    context.system.actorOf(Service.props(ConfigFactory.parseString(
+      """
+        |      start-broadcast-after = -1s
+        |      broadcast-interval = 30ms
+        |      broadcast-quantity = 1
+      """.stripMargin)), "service")
+  }
 
   override def receive: Receive = {
     case HeartbeatRequest =>

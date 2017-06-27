@@ -8,16 +8,16 @@ import java.io.FileWriter
 
 import akka.actor.{Actor, ActorLogging, ActorPath, ActorSelection, Address, PoisonPill, Props}
 import akka.cluster.Cluster
-import akka.util.Timeout
 import akka.pattern.{AskTimeoutException, ask}
+import akka.util.Timeout
 import cn.edu.tsinghua.ee.fi.cluster_curve.Messages.{HeartbeatRequest, HeartbeatResponse, Terminate}
 import cn.edu.tsinghua.ee.fi.cluster_curve.Operator.{MineComplete, MineResult, NextMine}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.collection.JavaConversions._
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
-import sys.process._
+import scala.sys.process._
 
 object Operator {
   def props(config: Config): Props = Props(new Operator(config))
@@ -106,7 +106,11 @@ class Operator(config: Config) extends Actor with ActorLogging {
   }
 
   def createWorkingActor(mineConfig: Config): Unit = {
-    context.actorOf(Worker.props(mineConfig, testInterval.toMillis millis, addr2selection)(heartbeatTimeout.toMillis millis).withDispatcher("heartbeat-dispatcher"))
+    context.actorOf(Worker.props(
+      mineConfig,
+      testInterval.toMillis millis,
+      addr2selection)(heartbeatTimeout.toMillis millis
+    ).withDispatcher("heartbeat-dispatcher"))
   }
 
   def saveResult(testName: String, name: String, result: Map[Address, Vector[Long]]): Unit = {
@@ -178,7 +182,7 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
   private var hb_loss: Map[Address, Int] = Map()
 
   @volatile
-  private var rtt: Map[Address, Vector[Long]] = Map()
+  private var rtt: Map[Address, Vector[Future[Long]]] = Map()
 
   // driver
   private val task = context.system.scheduler.schedule(testInterval, hbi.toMillis millis) {
@@ -189,25 +193,38 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
       if ((remotes diff hb_receive.keySet nonEmpty) || (hb_receive exists { _._2 < mineAmount})) {
         val timeStart = System.currentTimeMillis()
         remotes foreach { remote =>
-          if (!(hb_receive contains remote) || (hb_receive(remote) < mineAmount))
-            addr2selection(remote) ? HeartbeatRequest onComplete {
-              case Success(HeartbeatResponse) =>
+          if (!(hb_receive contains remote) || (hb_receive(remote) < mineAmount)) {
+            val futureRtt = addr2selection(remote) ? HeartbeatRequest map {
+              case HeartbeatResponse =>
                 hb_receive = increaseInMap(hb_receive, remote)
-                rtt = increaseRttInMap(rtt, remote, System.currentTimeMillis() - timeStart)
+                // rtt = increaseRttInMap(rtt, remote, System.currentTimeMillis() - timeStart)
                 indicateProcess(remote)
-              case Failure(_: AskTimeoutException) =>
-                hb_loss = increaseInMap(hb_loss, remote)
-                rtt = increaseRttInMap(rtt, remote, -1)
-              case Failure(e) =>
-                log.warning(s"unhandled exception $e in worker")
+                System.currentTimeMillis() - timeStart
               case msg @ _=>
                 log.warning(s"unhandled message $msg")
+                -1
+            } recover {
+              case _: AskTimeoutException =>
+                hb_loss = increaseInMap(hb_loss, remote)
+                // rtt = increaseRttInMap(rtt, remote, -1)
+                -1
+              case e =>
+                log.warning(s"unhandled exception $e in worker")
+                -1
             }
+            increaseRttInMap(rtt, remote, futureRtt)
+          }
         }
       } else {
         // Finished
-        context.actorSelection("../") ! MineResult(rtt, testName, name)
-        log.info(s"Mine for test: $testName-$name has finished.")
+        Future.sequence(rtt map {
+          case (address, rtts) =>
+            Future.sequence(rtts) map { address -> _ }
+        }) map { itRtt =>
+          context.actorSelection("../") ! MineResult(itRtt.toMap, testName, name)
+          log.info(s"Mine for test: $testName-$name has finished.")
+        }
+
         self ! PoisonPill
       }
     }
@@ -230,7 +247,10 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
   override def postStop(): Unit = {
     task.cancel()
     cleanupShell.!
-    val remotes = cluster.state.members.filter { _.roles contains "cooperator" } map { _.address }
+    val remotes = cluster.state.members.filter {
+      _.roles contains "cooperator"
+    } map { _.address } filterNot { _ == cluster.selfAddress }
+
     remotes foreach { remote =>
       addr2selection(remote) ! Terminate
     }

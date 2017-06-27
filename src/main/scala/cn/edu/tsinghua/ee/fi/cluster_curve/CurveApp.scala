@@ -14,18 +14,18 @@ object CurveApp {
     val config = localConfig
       .withFallback(ConfigFactory.parseResources("application.conf"))
 
-    val role = config.getStringList("akka.cluster.roles").get(0)
+    val roles = config.getStringList("akka.cluster.roles")
 
     val system = ActorSystem("CurveMiner", config)
 
-    role.toLowerCase match {
-      case "operator" =>
-        val operatorConfig = config.getConfig("operator")
-        system.actorOf(Operator.props(operatorConfig), name="operator")
+    if (roles contains "operator") {
+      val operatorConfig = config.getConfig("operator")
+      system.actorOf(Operator.props(operatorConfig), name = "operator")
+    }
 
-      case "cooperator" =>
-        val cooperatorConfig = config.getConfig("cooperator")
-        system.actorOf(Cooperator.props(cooperatorConfig).withDispatcher("heartbeat-dispatcher"), name="cooperator")
+    if (roles contains "cooperator") {
+      val cooperatorConfig = config.getConfig("cooperator")
+      system.actorOf(Cooperator.props(cooperatorConfig).withDispatcher("heartbeat-dispatcher"), name = "cooperator")
     }
 
   }
