@@ -33,7 +33,9 @@ class Cooperator(config: Config) extends Actor with ActorLogging {
   override def receive: Receive = {
     case HeartbeatRequest =>
       sender ! HeartbeatResponse
-      log.info("heartbeat...")
+      if (!(cluster.getSelfRoles contains "operator")) {
+        log.info("heartbeat...")
+      }
 
     case Terminate =>
       context.system.terminate()
