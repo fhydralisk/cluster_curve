@@ -223,9 +223,9 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
         }) map { itRtt =>
           context.actorSelection("../") ! MineResult(itRtt.toMap, testName, name)
           log.info(s"Mine for test: $testName-$name has finished.")
+          self ! PoisonPill
         }
 
-        self ! PoisonPill
       }
     }
   }
