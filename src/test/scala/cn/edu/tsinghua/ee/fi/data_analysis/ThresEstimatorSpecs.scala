@@ -30,7 +30,7 @@ class ThresEstimatorHelperSpecs extends Specification {
     }
 
     "pos 0.0 is thres 0" in {
-      teh1.thresAt(0.0, interpolation = true) must_== 0.0
+      teh1.thresAt(0.0, interpolation = true) must_== 0.99
     }
 
     "pos 0.25 is thres 1" in {
@@ -46,7 +46,7 @@ class ThresEstimatorHelperSpecs extends Specification {
       teh1.thresAt(0.8125, interpolation = true) must_== 2.5
     }
     "pos 1.0 is thres 3" in {
-      teh1.thresAt(1.0, interpolation = true) must_== 3.0
+      teh1.thresAt(1.0, interpolation = true) must_== 3.01
     }
   }
 }

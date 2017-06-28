@@ -5,10 +5,17 @@ import cn.edu.tsinghua.ee.fi.pingbaseddown.Evaluation
 /**
   * Created by hydra on 2017/6/21.
   */
-class ThresEstimator[T](rtts: Vector[T], window: Int, evaluation: Evaluation[T]) {
+class ThresEstimator[T](rtts: Vector[T], window: Int, evaluation: Evaluation[T])(implicit num: Numeric[T]) {
 
-  val thresholds: Vector[Double] =
-    rtts sliding window map { vrtt => evaluation.evaluate(vrtt.toList, 0) } toVector
+  val thresholds: Vector[Double] = {
+    import num._
+
+    rtts sliding window map { vrtt =>
+      val losses = vrtt count { _ < num.fromInt(0) }
+      val vfrtt = vrtt.toList.filter { _ >= num.fromInt(0) }
+      evaluation.evaluate(vfrtt, losses) } toVector
+  }
+
 
   private val helper = ThresEstimateHelper(thresholds)
 
@@ -48,10 +55,10 @@ private class ThresEstimateHelper(thresholds: Vector[Double]) {
     val posI = ((pos * sortedThres.size) toInt) - 1
     if (interpolation) {
       if (posI <= 0)
-        min * pos * sortedThres.size
+        min - 0.01
       else if (posI >= sortedThres.size - 1) {
         // TODO: How to deal with this interpolation
-        max
+        max + 0.01
       }
       else {
         /* linear interpolation

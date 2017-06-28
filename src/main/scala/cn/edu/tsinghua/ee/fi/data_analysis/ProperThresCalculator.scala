@@ -6,6 +6,7 @@ package cn.edu.tsinghua.ee.fi.data_analysis
 
 class ProperThresCalculator[T](normalThresEstimator: ThresEstimator[T], lossThresEstimator: ThresEstimator[T]) {
 
+  // TODO: middle point sometime does not make sense. for example sometimes pkt loss nodes.
   private val middlePoint = (normalThresEstimator.max + lossThresEstimator.min) / 2.0
   /**
     * Get the proper threshold value with the tolerance of missed determination.
@@ -29,6 +30,11 @@ class ProperThresCalculator[T](normalThresEstimator: ThresEstimator[T], lossThre
       middlePoint
     else
       normalThresEstimator.thresAt(1.0 - pid, interpolation = true)
+
+
+  def properThres(pidMax: Double, pmdMax: Double): Double =
+    (normalThresEstimator.thresAt(1.0 - pidMax, interpolation = true) +
+      lossThresEstimator.thresAt(pmdMax, interpolation = true)) / 2.0
 
   /**
     * Probability of missing determination with thres.
