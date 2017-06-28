@@ -194,7 +194,7 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
         val timeStart = System.currentTimeMillis()
         remotes foreach { remote =>
           if (!(hb_receive contains remote) || (hb_receive(remote) < mineAmount)) {
-            val futureRtt = addr2selection(remote) ? HeartbeatRequest map {
+            val futureRtt: Future[Long] = addr2selection(remote) ? HeartbeatRequest map {
               case HeartbeatResponse =>
                 hb_receive = increaseInMap(hb_receive, remote)
                 // rtt = increaseRttInMap(rtt, remote, System.currentTimeMillis() - timeStart)
