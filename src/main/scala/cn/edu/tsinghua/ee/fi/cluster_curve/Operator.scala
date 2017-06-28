@@ -212,7 +212,7 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
                 log.warning(s"unhandled exception $e in worker")
                 -1
             }
-            increaseRttInMap(rtt, remote, futureRtt)
+            rtt = increaseRttInMap(rtt, remote, futureRtt)
           }
         }
       } else {
