@@ -30,13 +30,13 @@ class Operator(config: Config) extends Actor with ActorLogging {
 
   protected val cluster = Cluster(context.system)
 
-  protected val testInterval: time.Duration = config.getDuration("test-interval")
-  protected val heartbeatTimeout: time.Duration = config.getDuration("heartbeat-timeout")
-  protected val savePath: String = config.getString("save-path")
+  protected lazy val testInterval: time.Duration = config.getDuration("test-interval")
+  protected lazy val heartbeatTimeout: time.Duration = config.getDuration("heartbeat-timeout")
+  protected lazy val savePath: String = config.getString("save-path")
 
   import context.dispatcher
 
-  protected val testList: List[Config] =
+  protected lazy val testList: List[Config] =
     for (
       testName <- config.getStringList("test").toList;
       shell <- (
@@ -57,7 +57,7 @@ class Operator(config: Config) extends Actor with ActorLogging {
         .withoutPath("custom")
     )
 
-  private val itTest = testList.toIterator
+  private lazy val itTest = testList.toIterator
 
   // statistics
   private var statistics: Vector[(String, String, Map[Address, Vector[Long]])] = Vector()

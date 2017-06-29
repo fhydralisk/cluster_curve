@@ -13,10 +13,12 @@ import scala.concurrent.duration._
 object PassiveOperator {
   def props(config: Config): Props = Props(new PassiveOperator(config))
 }
+
+
 class PassiveOperator(config: Config) extends Operator(config) {
 
-  override val testList: List[Config] = null
-  override val heartbeatTimeout: java.time.Duration = null
+  override lazy val testList: List[Config] = null
+  override lazy val heartbeatTimeout: java.time.Duration = null
 
   import context.dispatcher
 
