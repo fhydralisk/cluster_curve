@@ -36,8 +36,6 @@ class PassiveOperator(config: Config) extends Operator(config) {
           createWorkingActor(passiveMineConfig, 0 second)
         }
 
-        context become working
-
       case MineComplete =>
         log.info("Complete testing, terminating...")
         killWorker()
@@ -48,7 +46,7 @@ class PassiveOperator(config: Config) extends Operator(config) {
       case _ =>
     }
 
-    pp orElse super.preparing
+    pp orElse super.preparing orElse super.working
   }
 
   def killWorker(): Unit = {
