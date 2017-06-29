@@ -88,7 +88,6 @@ class Operator(config: Config) extends Actor with ActorLogging {
       context.system.scheduler.scheduleOnce(5 seconds) {
         System.exit(0)
       }
-    case _ =>
   }
 
   def working: Receive = {
@@ -101,8 +100,6 @@ class Operator(config: Config) extends Actor with ActorLogging {
 
       // Switch to state prepare
       scheduleNext()
-
-    case _ =>
   }
 
   def scheduleNext(): Unit = {
