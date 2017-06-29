@@ -28,6 +28,10 @@ object CurveApp {
       system.actorOf(Cooperator.props(cooperatorConfig).withDispatcher("heartbeat-dispatcher"), name = "cooperator")
     }
 
+    if (roles contains "passive-operator") {
+      val passiveOperatorConfig = config.getConfig("passive-operator")
+      system.actorOf(PassiveOperator.props(passiveOperatorConfig))
+    }
   }
 
 }
