@@ -21,7 +21,7 @@ class Cooperator(config: Config) extends Actor with ActorLogging {
 
   val cluster = Cluster(context.system)
 
-  if (!(cluster.getSelfRoles contains "operator")) {
+  if (!(cluster.getSelfRoles contains "operator") && !(cluster.getSelfRoles contains "passive-operator")) {
     context.system.actorOf(Service.props(ConfigFactory.parseString(
       """
         |      start-broadcast-after = -1s
