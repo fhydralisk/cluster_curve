@@ -110,11 +110,12 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
   override def postStop(): Unit = {
     task.cancel()
     cleanupShell.!
+    val fatherActor = context.actorSelection("../")
     Future.sequence(rtt map {
       case (address, rtts) =>
         Future.sequence(rtts) map { address -> _ }
     }) map { itRtt =>
-      context.actorSelection("../") ! MineResult(itRtt.toMap, testName, name)
+      fatherActor ! MineResult(itRtt.toMap, testName, name)
       log.info(s"Mine for test: $testName-$name has finished.")
     }
 
