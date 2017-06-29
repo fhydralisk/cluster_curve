@@ -75,7 +75,7 @@ class Operator(config: Config) extends Actor with ActorLogging {
     case NextMine(mineConfig) =>
       // schedule creating working actor
       context become working
-      createWorkingActor(mineConfig)
+      createWorkingActor(mineConfig, testInterval.toMillis millis)
 
       // Tell passive operators to perpare next mining
       msgToPassiveOperator(StartMining(mineConfig))
@@ -115,10 +115,10 @@ class Operator(config: Config) extends Actor with ActorLogging {
       self ! MineComplete
   }
 
-  def createWorkingActor(mineConfig: Config): Unit = {
+  def createWorkingActor(mineConfig: Config, ti: FiniteDuration): Unit = {
     context.actorOf(Worker.props(
       mineConfig,
-      testInterval.toMillis millis,
+      ti,
       addr2selection)(heartbeatTimeout.toMillis millis
     ).withDispatcher("heartbeat-dispatcher"), name = "worker")
   }

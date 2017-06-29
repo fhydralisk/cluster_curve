@@ -18,7 +18,6 @@ object PassiveOperator {
 class PassiveOperator(config: Config) extends Operator(config) {
 
   override lazy val testList: List[Config] = null
-  override lazy val heartbeatTimeout: java.time.Duration = null
 
   import context.dispatcher
 
@@ -30,9 +29,11 @@ class PassiveOperator(config: Config) extends Operator(config) {
           """
             |cleanup-shell = ""
             |shell = ""
+            |mine-amount = -1
           """.stripMargin).withFallback(mineConfig)
         context.system.scheduler.scheduleOnce(testInterval.toMillis millis) {
-          createWorkingActor(passiveMineConfig)
+          log.info("Creating working actor...")
+          createWorkingActor(passiveMineConfig, 0 second)
         }
 
         context become working

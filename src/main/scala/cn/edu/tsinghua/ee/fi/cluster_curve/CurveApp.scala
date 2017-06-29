@@ -2,6 +2,7 @@ package cn.edu.tsinghua.ee.fi.cluster_curve
 
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
+import scala.concurrent.duration._
 
 /**
   * Created by hydra on 2017/3/31.
@@ -20,7 +21,9 @@ object CurveApp {
 
     if (roles contains "operator") {
       val operatorConfig = config.getConfig("operator")
-      system.actorOf(Operator.props(operatorConfig), name = "operator")
+      system.scheduler.scheduleOnce(10 seconds) {
+        system.actorOf(Operator.props(operatorConfig), name = "operator")
+      }(system.dispatcher)
     }
 
     if (roles contains "cooperator") {
