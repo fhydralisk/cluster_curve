@@ -42,8 +42,6 @@ class PassiveOperator(config: Config) extends Operator(config) {
         context.system.scheduler.scheduleOnce(5 seconds) {
           System.exit(0)
         }
-
-      case _ =>
     }
 
     pp orElse super.preparing orElse super.working
