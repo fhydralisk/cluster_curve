@@ -30,7 +30,7 @@ object CurveApp {
 
     if (roles contains "passive-operator") {
       val passiveOperatorConfig = config.getConfig("passive-operator")
-      system.actorOf(PassiveOperator.props(passiveOperatorConfig))
+      system.actorOf(PassiveOperator.props(passiveOperatorConfig), name = "passive-operator")
     }
   }
 

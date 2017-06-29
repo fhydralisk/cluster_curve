@@ -23,7 +23,7 @@ class PassiveOperator(config: Config) extends Operator(config) {
   override def preparing: Receive = {
     def pp: Receive = {
       case StartMining(mineConfig) =>
-        context.actorSelection("worker") ! PoisonPill
+        killWorker()
         val passiveMineConfig = ConfigFactory.parseString(
           """
             |cleanup-shell = ""
@@ -37,7 +37,7 @@ class PassiveOperator(config: Config) extends Operator(config) {
 
       case MineComplete =>
         log.info("Complete testing, terminating...")
-        context.actorSelection("worker") ! PoisonPill
+        killWorker()
         context.system.scheduler.scheduleOnce(5 seconds) {
           System.exit(0)
         }
@@ -46,6 +46,11 @@ class PassiveOperator(config: Config) extends Operator(config) {
     }
 
     pp orElse super.preparing
+  }
+
+  def killWorker(): Unit = {
+    log.info("Passive operator is terminating worker.")
+    context.actorSelection("worker") ! PoisonPill
   }
 
   override def scheduleNext(): Unit = {
