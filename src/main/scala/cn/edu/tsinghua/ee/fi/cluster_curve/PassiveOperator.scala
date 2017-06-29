@@ -27,8 +27,8 @@ class PassiveOperator(config: Config) extends Operator(config) {
         killWorker()
         val passiveMineConfig = ConfigFactory.parseString(
           """
-            |cleanup-shell = "bash echo cleanup"
-            |shell = "bash echo startup"
+            |cleanup-shell = "echo cleanup"
+            |shell = "echo startup"
             |mine-amount = -1
           """.stripMargin).withFallback(mineConfig)
         context.system.scheduler.scheduleOnce(testInterval.toMillis millis) {

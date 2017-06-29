@@ -56,33 +56,44 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
 
   // driver
   private val task = context.system.scheduler.schedule(testInterval, hbi.toMillis millis) {
+
+    def sendHeartbeat(remote: Address, timeStart: Long): Unit = {
+      val futureRtt: Future[Long] = addr2selection(remote) ? HeartbeatRequest map {
+        case HeartbeatResponse =>
+          hb_receive = increaseInMap(hb_receive, remote)
+          // rtt = increaseRttInMap(rtt, remote, System.currentTimeMillis() - timeStart)
+          indicateProcess(remote)
+          System.currentTimeMillis() - timeStart
+        case msg @ _=>
+          log.warning(s"unhandled message $msg")
+          -1
+      } recover {
+        case _: AskTimeoutException =>
+          hb_loss = increaseInMap(hb_loss, remote)
+          // rtt = increaseRttInMap(rtt, remote, -1)
+          -1
+        case e =>
+          log.warning(s"unhandled exception $e in worker")
+          -1
+      }
+      rtt = increaseRttInMap(rtt, remote, futureRtt)
+    }
+
+
     val remotes = cluster.state.members.filter { _.roles contains "cooperator" } map { _.address }
     if (remotes.isEmpty)
       log.info("Cannot find cooperator. Please check whether remote node is started.")
     else {
-      if ((remotes diff hb_receive.keySet nonEmpty) || (hb_receive exists { _._2 < mineAmount})) {
+      if (mineAmount < 0) {
         val timeStart = System.currentTimeMillis()
         remotes foreach { remote =>
-          if (mineAmount < 0 || (!(hb_receive contains remote) || (hb_receive(remote) < mineAmount))) {
-            val futureRtt: Future[Long] = addr2selection(remote) ? HeartbeatRequest map {
-              case HeartbeatResponse =>
-                hb_receive = increaseInMap(hb_receive, remote)
-                // rtt = increaseRttInMap(rtt, remote, System.currentTimeMillis() - timeStart)
-                indicateProcess(remote)
-                System.currentTimeMillis() - timeStart
-              case msg @ _=>
-                log.warning(s"unhandled message $msg")
-                -1
-            } recover {
-              case _: AskTimeoutException =>
-                hb_loss = increaseInMap(hb_loss, remote)
-                // rtt = increaseRttInMap(rtt, remote, -1)
-                -1
-              case e =>
-                log.warning(s"unhandled exception $e in worker")
-                -1
-            }
-            rtt = increaseRttInMap(rtt, remote, futureRtt)
+          sendHeartbeat(remote, timeStart)
+        }
+      } else if ((remotes diff hb_receive.keySet nonEmpty) || (hb_receive exists { _._2 < mineAmount})) {
+        val timeStart = System.currentTimeMillis()
+        remotes foreach { remote =>
+          if (!(hb_receive contains remote) || (hb_receive(remote) < mineAmount)) {
+            sendHeartbeat(remote, timeStart)
           }
         }
       } else {
