@@ -60,17 +60,27 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
     def sendHeartbeat(remote: Address, timeStart: Long): Unit = {
       val futureRtt: Future[Long] = addr2selection(remote) ? HeartbeatRequest map {
         case HeartbeatResponse =>
-          hb_receive = increaseInMap(hb_receive, remote)
-          // rtt = increaseRttInMap(rtt, remote, System.currentTimeMillis() - timeStart)
-          indicateProcess(remote)
+          try {
+            hb_receive = increaseInMap(hb_receive, remote)
+            // rtt = increaseRttInMap(rtt, remote, System.currentTimeMillis() - timeStart)
+            indicateProcess(remote)
+          } catch {
+            case _: NullPointerException =>
+              // In case that the future is completed after the release of actor, we catch the null pointer exception here.
+          }
+
           System.currentTimeMillis() - timeStart
         case msg @ _=>
           log.warning(s"unhandled message $msg")
           -1
       } recover {
         case _: AskTimeoutException =>
-          hb_loss = increaseInMap(hb_loss, remote)
-          // rtt = increaseRttInMap(rtt, remote, -1)
+          try {
+            hb_loss = increaseInMap(hb_loss, remote)
+          } catch {
+            case _: NullPointerException =>
+          }
+
           -1
         case e =>
           log.warning(s"unhandled exception $e in worker")
@@ -78,7 +88,6 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
       }
       rtt = increaseRttInMap(rtt, remote, futureRtt)
     }
-
 
     val remotes = cluster.state.members.filter { _.roles contains "cooperator" } map { _.address }
     if (remotes.isEmpty)
@@ -99,7 +108,6 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
       } else {
         // Finished
         self ! PoisonPill
-
       }
     }
   }
