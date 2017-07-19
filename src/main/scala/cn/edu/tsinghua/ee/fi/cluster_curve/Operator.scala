@@ -116,11 +116,14 @@ class Operator(config: Config) extends Actor with ActorLogging {
   }
 
   def createWorkingActor(mineConfig: Config): Unit = {
-    context.actorOf(Worker.props(
-      mineConfig,
-      testInterval.toMillis millis,
-      addr2selection)(heartbeatTimeout.toMillis millis
-    ).withDispatcher("heartbeat-dispatcher"), name = "worker")
+    context.system.scheduler.scheduleOnce(testInterval.toMillis millis) {
+      context.actorOf(Worker.props(
+        mineConfig,
+        0 millis,
+        addr2selection)(heartbeatTimeout.toMillis millis
+      ).withDispatcher("heartbeat-dispatcher"), name = "worker")
+    }
+
   }
 
   def saveResult(testName: String, name: String, result: Map[Address, Vector[Long]]): Unit = {
