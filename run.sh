@@ -6,9 +6,9 @@ echo "Running $MAIN_CLASS"
 
 while true
 do
-    mvn exec:java -Dexec.mainClass=$MAIN_CLASS
+    mvn exec:java -Dexec.mainClass=${MAIN_CLASS}
 
-    if [ $1 -ne 1 ]; then
+    if [ "$1" -ne 1 ]; then
         break
     fi
 
