@@ -87,7 +87,7 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
         }
       } else {
         // Finished
-        self ! PoisonPill
+        finished()
 
       }
     }
@@ -95,6 +95,17 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
 
   context.system.scheduler.scheduleOnce(testInterval) {
     context.system.actorOf(Service.props(serviceConfig), name = "service")
+  }
+
+  private def finished(): Unit = {
+    Future.sequence(rtt map {
+      case (address, rtts) =>
+        Future.sequence(rtts) map { address -> _ }
+    }) map { itRtt =>
+      context.actorSelection("../") ! MineResult(itRtt.toMap, testName, name)
+      log.info(s"Mine for test: $testName-$name has finished.")
+      self ! PoisonPill
+    }
   }
 
   override def preStart(): Unit = {
@@ -110,13 +121,6 @@ class Worker(config: Config, testInterval: FiniteDuration, addr2selection: Addre
   override def postStop(): Unit = {
     task.cancel()
     cleanupShell.!
-    Future.sequence(rtt map {
-      case (address, rtts) =>
-        Future.sequence(rtts) map { address -> _ }
-    }) map { itRtt =>
-      context.actorSelection("../") ! MineResult(itRtt.toMap, testName, name)
-      log.info(s"Mine for test: $testName-$name has finished.")
-    }
 
     val remotes = cluster.state.members.filter { member =>
       (member.roles contains "cooperator") &&
